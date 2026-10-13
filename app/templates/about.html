@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}About - Smart Queue and Digital Token System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">About This Project</h4>
+            </div>
+            <div class="card-body">
+                <p class="card-text">
+                    <strong>Smart Queue and Digital Token System</strong> is a college project built with Python Flask,
+                    Flask-SQLAlchemy, and SQLite. It demonstrates a modern digital queue management system for hospitals
+                    and clinics, replacing paper tokens with secure, scannable digital tokens.
+                </p>
+                <p class="card-text">
+                    <strong>Tech stack:</strong> Python, Flask, Flask-SQLAlchemy, Flask-Login, Flask-WTF, WTForms,
+                    SQLite, Bootstrap 5, HTML, CSS, and JavaScript.
+                </p>
+                <p class="card-text">
+                    <strong>Security:</strong> Passwords are hashed with Werkzeug's secure password hashing,
+                    authentication uses Flask-Login sessions, and all access is enforced server-side by role.
+                </p>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-info text-dark">
+                <h4 class="mb-0">Demo Credentials (Development Only)</h4>
+            </div>
+            <div class="card-body">
+                <p class="text-muted small mb-3">
+                    These accounts are for demonstration and testing only. Never use in production.
+                </p>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Role</th>
+                            <th>Username</th>
+                            <th>Password</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>👨‍⚕️ Doctor</td>
+                            <td><code>doctor_demo</code></td>
+                            <td><code>Doctor123!</code></td>
+                        </tr>
+                        <tr>
+                            <td>👩‍💼 Receptionist</td>
+                            <td><code>reception_demo</code></td>
+                            <td><code>Reception123!</code></td>
+                        </tr>
+                        <tr>
+                            <td>👤 Patient</td>
+                            <td><code>patient_demo</code></td>
+                            <td><code>Patient123!</code></td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="text-muted small">
+                    You can also <a href="{{ url_for('main.register') }}">register a new patient account</a> to try
+                    the full self-service flow.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-lg-12">
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h4 class="mb-0">Project Structure</h4>
+            </div>
+            <div class="card-body">
+                <pre class="mb-0"><code>.
+├── app/
+│   ├── __init__.py          # App factory, DB + Login init
+│   ├── config.py            # Config (dev / prod / test)
+│   ├── models.py            # User, Patient, Doctor, Receptionist, Appointment, Token
+│   ├── forms.py             # WTForms (login, register, booking, walk-in)
+│   ├── routes.py            # All view functions + auth/role checks
+│   ├── utils.py             # Token gen, QR codes, role decorators
+│   ├── static/              # CSS, JS, generated QR codes
+│   └── templates/           # HTML templates
+├── instance/                # SQLite DB (gitignored)
+├── seed.py                  # Fictional demo data (manual run only)
+├── run.py                   # Entry point
+├── requirements.txt
+├── README.md
+└── .gitignore</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

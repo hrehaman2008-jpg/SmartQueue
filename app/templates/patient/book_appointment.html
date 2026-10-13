@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+
+{% block title %}Book Appointment - Smart Queue{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white py-4">
+                <h3 class="mb-0 text-center">Book an Appointment</h3>
+            </div>
+            <div class="card-body pt-4">
+                <form method="POST" action="{{ url_for('main.book_appointment') }}">
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.doctor_id.label(class="form-label fw-medium") }}
+                        {{ form.doctor_id(class="form-select" + (' is-invalid' if form.doctor_id.errors else '')) }}
+                        {% if form.doctor_id.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.doctor_id.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            {{ form.appointment_date.label(class="form-label fw-medium") }}
+                            {{ form.appointment_date(class="form-control" + (' is-invalid' if form.appointment_date.errors else '')) }}
+                            {% if form.appointment_date.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.appointment_date.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            {{ form.appointment_time.label(class="form-label fw-medium") }}
+                            {{ form.appointment_time(class="form-control" + (' is-invalid' if form.appointment_time.errors else '')) }}
+                            {% if form.appointment_time.errors %}
+                                <div class="invalid-feedback">
+                                    {% for error in form.appointment_time.errors %}
+                                        <span>{{ error }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        {{ form.purpose.label(class="form-label fw-medium") }}
+                        {{ form.purpose(class="form-control" + (' is-invalid' if form.purpose.errors else '')) }}
+                        <div class="form-text">Reason for visit (optional)</div>
+                        {% if form.purpose.errors %}
+                            <div class="invalid-feedback">
+                                {% for error in form.purpose.errors %}
+                                    <span>{{ error }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        Book Appointment
+                    </button>
+                </form>
+
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Your appointment will generate a digital token automatically.
+                        Check your dashboard for queue position and QR code.
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

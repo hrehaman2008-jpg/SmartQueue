@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Home - Smart Queue and Digital Token System{% endblock %}
+
+{% block content %}
+<div class="text-center py-5">
+    <h1 class="display-4 fw-bold">Smart Queue & Digital Token System</h1>
+    <p class="lead text-muted">
+        A modern digital token and queue management system for hospitals and clinics.
+    </p>
+    <div class="my-4">
+        {% if current_user.is_authenticated %}
+            {% if current_user.is_patient %}
+                <a href="{{ url_for('main.patient_dashboard') }}" class="btn btn-primary btn-lg me-2">Go to Patient Dashboard</a>
+                <a href="{{ url_for('main.book_appointment') }}" class="btn btn-outline-primary btn-lg">Book Appointment</a>
+            {% elif current_user.is_doctor %}
+                <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-primary btn-lg me-2">Go to Doctor Dashboard</a>
+            {% elif current_user.is_receptionist %}
+                <a href="{{ url_for('main.receptionist_dashboard') }}" class="btn btn-primary btn-lg me-2">Go to Receptionist Dashboard</a>
+            {% endif %}
+        {% else %}
+            <a href="{{ url_for('main.login') }}" class="btn btn-primary btn-lg me-2">Log In</a>
+            <a href="{{ url_for('main.register') }}" class="btn btn-outline-primary btn-lg">Register Now</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">🏥 Patient Registration & Login</h3>
+                <p class="card-text">Create an account or log in to manage your appointments and track your queue position in real time.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">📅 Online Appointment Booking</h3>
+                <p class="card-text">Book appointments with your preferred doctor and receive a digital token automatically.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">🎫 Automatic Digital Token Generation</h3>
+                <p class="card-text">Every patient gets a unique digital token with a scannable QR code showing their queue position.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">📊 Patient Dashboard</h3>
+                <p class="card-text">View your current token, live queue position, appointment history, and follow-up bookings.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">👨‍💼 Receptionist Dashboard</h3>
+                <p class="card-text">Register walk-in patients, issue tokens, and manage the live queue from one central board.</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 text-center">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body">
+                <h3 class="card-title">👨‍⚕️ Doctor Dashboard</h3>
+                <p class="card-text">Call patients in order, view the waiting queue, and mark consultations as completed.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="card bg-light shadow-sm">
+            <div class="card-body text-center">
+                <h3>How It Works</h3>
+                <ol class="list-group list-group-flush">
+                    <li class="list-group-item text-start"><strong>1. Register / Log in</strong> as a patient to get started.</li>
+                    <li class="list-group-item text-start"><strong>2. Book an appointment</strong> with a doctor or register as a walk-in patient.</li>
+                    <li class="list-group-item text-start"><strong>3. Receive your digital token</strong> with a QR code.</li>
+                    <li class="list-group-item text-start"><strong>4. Check your live queue position</strong> from your dashboard.</li>
+                    <li class="list-group-item text-start"><strong>5. Call & consult</strong> — doctors call patients in order and complete consultations.</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-5">
+    <div class="col-md-12">
+        <div class="card bg-dark text-white shadow-sm">
+            <div class="card-body">
+                <h4>For Demonstration Purposes</h4>
+                <p class="card-text">
+                    This is a college project built with fictional demo data. Use the demo credentials in
+                    <a href="{{ url_for('main.about') }}" class="text-warning">About</a> to explore all dashboards.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
