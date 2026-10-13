@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+{% block title %}My Appointments - Smart Queue{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="mb-0">Doctor Appointments</h2>
+    <p class="text-muted mb-0">List of scheduled appointments for your patients.</p>
+</div>
+
+<div class="card shadow-sm">
+    <div class="card-body">
+        {% if appointments %}
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Patient</th>
+                            <th>Date & Time</th>
+                            <th>Purpose</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for appt in appointments %}
+                            <tr>
+                                <td>{{ appt.patient.full_name }}</td>
+                                <td>{{ appt.formatted_datetime }}</td>
+                                <td>{{ appt.purpose }}</td>
+                                <td>
+                                    <span class="badge bg-{% if appt.status == 'completed' %}success{% elif appt.status == 'cancelled' %}secondary{% else %}primary{% endif %}">
+                                        {{ appt.status|capitalize }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-4">
+                <p class="text-muted">No appointments found.</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

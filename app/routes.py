@@ -392,6 +392,9 @@ def complete_consultation(token_id):
     """Mark a consultation as completed and free the queue position."""
     doctor = get_current_doctor()
     token = Token.query.filter_by(id=token_id, doctor_id=doctor.id).first_or_404()
+    if token.status == "completed":
+        flash(f"Token {token.token_number} is already completed.", "info")
+        return redirect(url_for("main.doctor_dashboard"))
     token.status = "completed"
     token.completed_at = datetime.utcnow()
     db.session.commit()
