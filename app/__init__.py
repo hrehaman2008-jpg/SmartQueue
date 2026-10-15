@@ -46,5 +46,31 @@ def create_app(config_object=None):
     # Create database tables for the first time
     with app.app_context():
         db.create_all()
+        # Atomic demo seeding (opt-in via ENABLE_DEMO_SEEDING=1)
+        if os.getenv("ENABLE_DEMO_SEEDING") == "1":
+            from .models import User, Doctor, Receptionist
+            from .config import BaseConfig
+            doc_pw = os.getenv("DEMO_DOCTOR_PASSWORD")
+            rec_pw = os.getenv("DEMO_RECEPTIONIST_PASSWORD")
+            if doc_pw and rec_pw:
+                try:
+                    for username, password, role, profile_cls, profile_data in [
+                        (BaseConfig.DEMO_DOCTOR_USERNAME, doc_pw, "doctor", Doctor, {"full_name": "Demo Doctor"}),
+                        (BaseConfig.DEMO_RECEPTIONIST_USERNAME, rec_pw, "receptionist", Receptionist, {"full_name": "Demo Receptionist"}),
+                    ]:
+                        user = User.query.filter_by(username=username).first()
+                        if not user:
+                            user = User(username=username, role=role)
+                            user.set_password(password)
+                            db.session.add(user)
+                            db.session.flush() # Ensure ID is assigned
+
+                        # Verify role and check if profile is missing
+                        if user.role == role and not getattr(user, role):
+                            db.session.add(profile_cls(user_id=user.id, **profile_data))
+                    db.session.commit()
+                except Exception as e:
+                    db.session.rollback()
+                    app.logger.error(f"Demo seeding failed: {e}")
 
     return app

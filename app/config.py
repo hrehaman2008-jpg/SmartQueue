@@ -16,10 +16,12 @@ class BaseConfig:
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 
     # Database — default to the instance folder SQLite file
-    SQLALCHEMY_DATABASE_URI = os.getenv(
-        "DATABASE_URL",
-        f"sqlite:///{Path(__file__).resolve().parent.parent / 'instance' / 'queue.db'}",
-    )
+    SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
+    if not SQLALCHEMY_DATABASE_URI:
+        if os.getenv("VERCEL"):
+            SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/queue.db"
+        else:
+            SQLALCHEMY_DATABASE_URI = f"sqlite:///{Path(__file__).resolve().parent.parent / 'instance' / 'queue.db'}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Session / security

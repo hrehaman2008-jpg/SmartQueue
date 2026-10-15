@@ -43,3 +43,8 @@ app/static/qrcode/*.png
 .agents/
 .claude/
 .codex/
+.vercel
+.env
+.env.local
+!.env.example
+
