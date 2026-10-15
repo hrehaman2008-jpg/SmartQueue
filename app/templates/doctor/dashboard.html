@@ -1,52 +1,48 @@
 {% extends "base.html" %}
 
-{% block title %}Doctor Dashboard - Smart Queue{% endblock %}
+{% block title %}Doctor Dashboard{% endblock %}
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-4">
     <div>
-        <h2 class="mb-0">Doctor Dashboard</h2>
-        <p class="text-muted mb-0">Welcome, {{ current_user.doctor.full_name }}!</p>
+        <h2 class="h3 fw-bold mb-1">Doctor Dashboard</h2>
+        <p class="text-muted mb-0">Welcome, {{ current_user.doctor.full_name }}</p>
     </div>
 </div>
 
 <div class="row">
     <!-- Doctor Profile -->
-    <div class="col-md-4 mb-4">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">Doctor Profile</h5>
+    <div class="col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-header border-0">
+                <h5 class="mb-0 fw-bold">Doctor Profile</h5>
             </div>
-            <div class="card-body">
-                <p class="mb-1 text-muted">Name</p>
-                <p class="fw-bold">{{ current_user.doctor.full_name }}</p>
-                <p class="mb-1 text-muted">Specialization</p>
-                <p class="fw-medium">{{ current_user.doctor.specialization }}</p>
-                <p class="mb-1 text-muted">Qualification</p>
-                <p class="fw-medium">{{ current_user.doctor.qualification }}</p>
-                <p class="mb-1 text-muted">Room Number</p>
-                <p class="fw-medium">{{ current_user.doctor.room_number }}</p>
+            <div class="card-body pt-0">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5 text-muted small text-uppercase">Specialty</dt>
+                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.specialization }}</dd>
+                    <dt class="col-sm-5 text-muted small text-uppercase">Quals</dt>
+                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.qualification }}</dd>
+                    <dt class="col-sm-5 text-muted small text-uppercase">Room</dt>
+                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.room_number }}</dd>
+                </dl>
             </div>
         </div>
     </div>
 
-    <!-- Summary Cards -->
-    <div class="col-md-8 mb-4">
+    <!-- Stats -->
+    <div class="col-lg-8 mb-4">
         <div class="row h-100">
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm bg-light h-100">
-                    <div class="card-body text-center">
-                        <h6 class="text-muted">Waiting Patients</h6>
-                        <div class="display-5 fw-bold">{{ tokens|length }}</div>
-                    </div>
+            <div class="col-md-6 mb-3 mb-md-0">
+                <div class="card h-100 d-flex flex-column justify-content-center align-items-center p-3">
+                    <h6 class="text-muted text-uppercase small fw-bold">Waiting</h6>
+                    <div class="display-4 fw-bold text-primary">{{ tokens|length }}</div>
                 </div>
             </div>
-            <div class="col-md-6 mb-3">
-                <div class="card shadow-sm bg-light h-100">
-                    <div class="card-body text-center">
-                        <h6 class="text-muted">Completed Today</h6>
-                        <div class="display-5 fw-bold text-success">{{ completed_today }}</div>
-                    </div>
+            <div class="col-md-6">
+                <div class="card h-100 d-flex flex-column justify-content-center align-items-center p-3">
+                    <h6 class="text-muted text-uppercase small fw-bold">Completed</h6>
+                    <div class="display-4 fw-bold" style="color: var(--accent);">{{ completed_today }}</div>
                 </div>
             </div>
         </div>
@@ -54,85 +50,71 @@
 </div>
 
 <!-- Currently Serving -->
-<div class="row mt-2">
-    <div class="col-md-12">
-        <div class="card shadow-sm border-primary">
-            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
-                <h5 class="mb-0">Currently Serving</h5>
-                {% if not next_token %}
-                    <a href="{{ url_for('main.call_next_token') }}" class="btn btn-light btn-sm">Call Next Patient</a>
-                {% endif %}
+<div class="card mb-4 border-start border-primary border-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Currently Serving</h5>
+        {% if not next_token %}
+            <a href="{{ url_for('main.call_next_token') }}" class="btn btn-primary btn-sm">Call Next</a>
+        {% endif %}
+    </div>
+    <div class="card-body">
+        {% if next_token %}
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="text-primary h1 fw-black mb-0">{{ next_token.token_number }}</div>
+                    <div class="h4 mb-0 fw-bold">{{ next_token.patient.full_name }}</div>
+                    <small class="text-muted">{{ next_token.appointment.purpose if next_token.appointment else 'Walk-in' }}</small>
+                </div>
+                <form action="{{ url_for('main.complete_consultation', token_id=next_token.id) }}" method="POST">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-primary px-4">Complete</button>
+                </form>
             </div>
-            <div class="card-body">
-                {% if next_token %}
-                    <div class="d-flex justify-content-between align-items-center">
-                        <div>
-                            <h3 class="display-6 fw-bold text-primary mb-1">{{ next_token.token_number }}</h3>
-                            <p class="mb-0 fw-medium fs-5">{{ next_token.patient.full_name }}</p>
-                            <p class="mb-0 text-muted">{{ next_token.appointment.purpose if next_token.appointment else 'Walk-in' }}</p>
-                        </div>
-                        <form action="{{ url_for('main.complete_consultation', token_id=next_token.id) }}" method="POST">
-                            {{ form.hidden_tag() }}
-                            <button type="submit" class="btn btn-success btn-lg">Complete Consultation</button>
-                        </form>
-                    </div>
-                {% else %}
-                    <div class="text-center py-3">
-                        <p class="text-muted">No patient currently being served.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+        {% else %}
+            <div class="text-center py-3 text-muted">No active consultation.</div>
+        {% endif %}
     </div>
 </div>
 
 <!-- Waiting Queue -->
-<div class="row mt-4">
-    <div class="col-md-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-secondary text-white">
-                <h5 class="mb-0">Waiting Queue</h5>
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0 fw-bold">Waiting Queue</h5>
+    </div>
+    <div class="card-body p-0">
+        {% if tokens %}
+            <div class="table-responsive">
+                <table class="table align-middle">
+                    <thead>
+                        <tr>
+                            <th class="ps-4">Pos</th>
+                            <th>Token</th>
+                            <th>Patient</th>
+                            <th>Purpose</th>
+                            <th class="text-end pe-4">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                            <tr>
+                                <td class="ps-4 text-muted">{{ token.queue_position }}</td>
+                                <td class="fw-bold">{{ token.token_number }}</td>
+                                <td>{{ token.patient.full_name }}</td>
+                                <td>{{ token.appointment.purpose if token.appointment else '-' }}</td>
+                                <td class="text-end pe-4">
+                                    <form action="{{ url_for('main.skip_token', token_id=token.id) }}" method="POST">
+                                        {{ form.hidden_tag() }}
+                                        <button type="submit" class="btn btn-sm btn-outline-warning">Skip</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
             </div>
-            <div class="card-body">
-                {% if tokens %}
-                    <div class="table-responsive">
-                        <table class="table table-hover align-middle">
-                            <thead class="table-light">
-                                <tr>
-                                    <th>Pos</th>
-                                    <th>Token</th>
-                                    <th>Patient</th>
-                                    <th>Time</th>
-                                    <th>Purpose</th>
-                                    <th>Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for token in tokens %}
-                                    <tr>
-                                        <td>{{ token.queue_position }}</td>
-                                        <td class="fw-bold">{{ token.token_number }}</td>
-                                        <td>{{ token.patient.full_name }}</td>
-                                        <td>{{ token.appointment.formatted_datetime if token.appointment else 'Walk-in' }}</td>
-                                        <td>{{ token.appointment.purpose if token.appointment else '-' }}</td>
-                                        <td>
-                                            <form action="{{ url_for('main.skip_token', token_id=token.id) }}" method="POST" class="d-inline">
-                                                {{ form.hidden_tag() }}
-                                                <button type="submit" class="btn btn-sm btn-warning">Skip</button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div class="text-center py-4">
-                        <p class="text-muted">Queue is currently empty.</p>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
+        {% else %}
+            <div class="text-center py-4 text-muted">Queue is empty.</div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

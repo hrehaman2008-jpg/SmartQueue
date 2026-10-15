@@ -1,0 +1,30 @@
+# Exclude local development and tool artifacts
+.claude/
+.agents/
+.codex/
+
+# Exclude virtual environments and local dependency caches
+venv/
+env/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Exclude local storage and databases
+instance/
+*.db
+*.bak
+
+# Exclude logs and test/debug artifacts
+*.log
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Exclude IDE and OS noise
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

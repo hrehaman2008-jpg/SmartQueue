@@ -40,3 +40,6 @@ htmlcov/
 build/
 dist/
 app/static/qrcode/*.png
+.agents/
+.claude/
+.codex/
