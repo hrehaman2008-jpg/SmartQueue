@@ -1,9 +1,5 @@
-"""Configuration classes for the Smart Queue application.
 
-All configuration is loaded from environment variables where possible.
-Secrets are never hardcoded — the development config falls back to
-clearly-named dev-only defaults that must be overridden in production.
-"""
+"""Configuration classes for the Smart Queue application."""
 
 import os
 from pathlib import Path
@@ -12,27 +8,39 @@ from pathlib import Path
 class BaseConfig:
     """Common configuration shared by all environments."""
 
-    # Application metadata
     SECRET_KEY = os.getenv("FLASK_SECRET_KEY", "dev-secret-change-me")
 
-    # Database — default to the instance folder SQLite file
+    # Database configuration
     SQLALCHEMY_DATABASE_URI = os.getenv("DATABASE_URL")
-    if not SQLALCHEMY_DATABASE_URI:
+
+    if SQLALCHEMY_DATABASE_URI:
+        if SQLALCHEMY_DATABASE_URI.startswith("postgres://"):
+            SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+                "postgres://", "postgresql+psycopg://", 1
+            )
+        elif SQLALCHEMY_DATABASE_URI.startswith("postgresql://"):
+            SQLALCHEMY_DATABASE_URI = SQLALCHEMY_DATABASE_URI.replace(
+                "postgresql://", "postgresql+psycopg://", 1
+            )
+    else:
         if os.getenv("VERCEL"):
             SQLALCHEMY_DATABASE_URI = "sqlite:////tmp/queue.db"
         else:
-            SQLALCHEMY_DATABASE_URI = f"sqlite:///{Path(__file__).resolve().parent.parent / 'instance' / 'queue.db'}"
+            SQLALCHEMY_DATABASE_URI = (
+                f"sqlite:///{Path(__file__).resolve().parent.parent / 'instance' / 'queue.db'}"
+            )
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-    # Session / security
+    # Session and security
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    PERMANENT_SESSION_LIFETIME = 60 * 60 * 8  # 8 hours
+    PERMANENT_SESSION_LIFETIME = 60 * 60 * 8
 
     # CSRF
     WTF_CSRF_TIME_LIMIT = 3600
 
-    # Demo credentials (development only) — documented in README.md
+    # Demo credentials
     DEMO_PATIENT_USERNAME = os.getenv("DEMO_PATIENT_USERNAME", "patient_demo")
     DEMO_PATIENT_PASSWORD = os.getenv("DEMO_PATIENT_PASSWORD", "Patient123!")
     DEMO_DOCTOR_USERNAME = os.getenv("DEMO_DOCTOR_USERNAME", "doctor_demo")
@@ -46,20 +54,20 @@ class BaseConfig:
 
 
 class DevelopmentConfig(BaseConfig):
-    """Development configuration — debug enabled, permissive."""
+    """Development configuration."""
     DEBUG = True
     TESTING = False
 
 
 class ProductionConfig(BaseConfig):
-    """Production configuration — debug disabled, stricter."""
+    """Production configuration."""
     DEBUG = False
     TESTING = False
     SESSION_COOKIE_SECURE = True
 
 
 class TestingConfig(BaseConfig):
-    """Testing configuration — uses an in-memory database."""
+    """Testing configuration."""
     SQLALCHEMY_DATABASE_URI = "sqlite:///:memory:"
     DEBUG = False
     TESTING = True

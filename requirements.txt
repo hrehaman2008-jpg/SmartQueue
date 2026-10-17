@@ -6,3 +6,4 @@ email-validator==2.2.0
 qrcode[pil]==7.4
 Pillow==10.4.0
 Werkzeug==3.0.4
+psycopg[binary]==3.2.9
