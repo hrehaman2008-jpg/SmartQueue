@@ -152,8 +152,8 @@ class Token(db.Model):
 
     Each token has a unique number, is linked to a patient (and optionally
     an appointment), and carries a status that drives the dashboard UI.
-    A QR code image is generated locally and stored under
-    ``app/static/qrcode/``; the path is recorded here.
+    Its QR code image is rendered on the fly from ``token_number``
+    (route ``/qr/<token_number>``) and never written to disk.
     """
 
     __tablename__ = "token"
@@ -172,7 +172,10 @@ class Token(db.Model):
     generated_at = db.Column(db.DateTime, default=datetime.utcnow)
     called_at = db.Column(db.DateTime, nullable=True)
     completed_at = db.Column(db.DateTime, nullable=True)
-    qr_code_path = db.Column(db.String(200), nullable=True)  # relative to instance folder
+    # Legacy column: earlier versions persisted QR PNGs under static/.
+    # QR images are now generated in memory from token_number (see /qr/<n>),
+    # so this is no longer written; the column is kept to avoid schema changes.
+    qr_code_path = db.Column(db.String(200), nullable=True)
 
     # Relationships
     patient = db.relationship("Patient", back_populates="tokens")
@@ -194,9 +197,9 @@ class Token(db.Model):
 
     @property
     def qr_code_url(self):
-        """Return a URL relative to the app root for the QR PNG."""
-        if self.qr_code_path:
-            return f"/static/qrcode/{self.qr_code_path}"
+        """URL of this token's QR image (rendered on the fly)."""
+        if self.token_number:
+            return f"/qr/{self.token_number}"
         return None
 
 

@@ -1,35 +1,46 @@
 {% extends "base.html" %}
 
-{% block title %}My Appointments - Smart Queue{% endblock %}
+{% block title %}My Appointments - SmartQueue{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <h2 class="mb-0">Doctor Appointments</h2>
-    <p class="text-muted mb-0">List of scheduled appointments for your patients.</p>
+<div class="page-header">
+    <div>
+        <h2><span class="page-header-icon"><i class="bi bi-calendar2-week"></i></span>Doctor Appointments</h2>
+        <p class="page-subtitle">Every appointment booked with you, most recent first.</p>
+    </div>
+    <div class="sq-page-actions">
+        <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i>Back to Dashboard
+        </a>
+    </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body">
+<div class="sq-panel">
+    <div class="sq-panel-head">
+        <h3><i class="bi bi-calendar-check"></i>All Appointments</h3>
+        <span class="sq-muted-xs">{{ appointments|length }} total</span>
+    </div>
+    <div class="sq-panel-body is-flush">
         {% if appointments %}
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
-                    <thead class="table-light">
+                <table class="table table-hover mb-0">
+                    <thead>
                         <tr>
-                            <th>Patient</th>
-                            <th>Date & Time</th>
-                            <th>Purpose</th>
-                            <th>Status</th>
+                            <th scope="col">Patient</th>
+                            <th scope="col">Date &amp; Time</th>
+                            <th scope="col" class="sq-hide-sm">Purpose</th>
+                            <th scope="col">Status</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for appt in appointments %}
                             <tr>
-                                <td>{{ appt.patient.full_name }}</td>
-                                <td>{{ appt.formatted_datetime }}</td>
-                                <td>{{ appt.purpose }}</td>
+                                <td class="fw-semibold">{{ appt.patient.full_name }}</td>
+                                <td class="text-muted">{{ appt.formatted_datetime }}</td>
+                                <td class="sq-hide-sm">{{ appt.purpose }}</td>
                                 <td>
-                                    <span class="badge bg-{% if appt.status == 'completed' %}success{% elif appt.status == 'cancelled' %}secondary{% else %}primary{% endif %}">
-                                        {{ appt.status|capitalize }}
+                                    <span class="badge-status {{ 'completed' if appt.status == 'completed' else 'cancelled' if appt.status == 'cancelled' else 'no_show' if appt.status == 'no_show' else 'scheduled' }}">
+                                        <span class="visually-hidden">Status: </span>{{ appt.status|replace('_', ' ')|capitalize }}
                                     </span>
                                 </td>
                             </tr>
@@ -38,8 +49,13 @@
                 </table>
             </div>
         {% else %}
-            <div class="text-center py-4">
-                <p class="text-muted">No appointments found.</p>
+            <div class="sq-empty">
+                <i class="bi bi-calendar-x"></i>
+                <p class="sq-empty-title">No appointments found</p>
+                <p>Appointments booked with you will appear here with their current status.</p>
+                <a href="{{ url_for('main.doctor_dashboard') }}" class="btn btn-soft btn-sm">
+                    <i class="bi bi-speedometer2"></i>Go to dashboard
+                </a>
             </div>
         {% endif %}
     </div>

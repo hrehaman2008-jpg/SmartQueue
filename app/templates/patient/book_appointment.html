@@ -1,79 +1,125 @@
 {% extends "base.html" %}
 
-{% block title %}Book Appointment - Smart Queue{% endblock %}
+{% block title %}Book Appointment - SmartQueue{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white py-4">
-                <h3 class="mb-0 text-center">Book an Appointment</h3>
+    <div class="col-md-10 col-lg-8">
+        <div class="card sq-auth-card wide">
+            <div class="sq-auth-header">
+                <span class="page-header-icon"><i class="bi bi-calendar-plus"></i></span>
+                <h1>Book an appointment</h1>
+                <p>Three quick steps &mdash; your digital token is issued as soon as you confirm.</p>
             </div>
             <div class="card-body pt-4">
-                <form method="POST" action="{{ url_for('main.book_appointment') }}">
+                {% if form.errors %}
+                    <div class="sq-error-summary" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Please correct the highlighted fields below and try again.</span>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('main.book_appointment') }}" novalidate>
                     {{ form.hidden_tag() }}
 
-                    <div class="mb-3">
-                        {{ form.doctor_id.label(class="form-label fw-medium") }}
-                        {{ form.doctor_id(class="form-select" + (' is-invalid' if form.doctor_id.errors else '')) }}
+                    <div class="sq-form-step">
+                        <div class="sq-form-step-head">
+                            <span class="sq-step-badge" aria-hidden="true">1</span>
+                            <div>
+                                <h3>Choose a doctor</h3>
+                                <p>Your token is added to this doctor's queue.</p>
+                            </div>
+                        </div>
+                        {{ form.doctor_id.label(class="form-label") }}
+                        {{ form.doctor_id(
+                            class="form-select" + (' is-invalid' if form.doctor_id.errors else ''),
+                            aria_invalid=('true' if form.doctor_id.errors else 'false'),
+                            aria_describedby="doctor-help"
+                        ) }}
+                        <div id="doctor-help" class="form-text">All available doctors at this clinic are listed.</div>
                         {% if form.doctor_id.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.doctor_id.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.doctor_id.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
 
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.appointment_date.label(class="form-label fw-medium") }}
-                            {{ form.appointment_date(class="form-control" + (' is-invalid' if form.appointment_date.errors else '')) }}
-                            {% if form.appointment_date.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.appointment_date.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                    <div class="sq-form-step">
+                        <div class="sq-form-step-head">
+                            <span class="sq-step-badge" aria-hidden="true">2</span>
+                            <div>
+                                <h3>Pick a date and time</h3>
+                                <p>Choose any future date and a time that suits you.</p>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-3">
-                            {{ form.appointment_time.label(class="form-label fw-medium") }}
-                            {{ form.appointment_time(class="form-control" + (' is-invalid' if form.appointment_time.errors else '')) }}
-                            {% if form.appointment_time.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.appointment_time.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
+                        <div class="row">
+                            <div class="col-md-6 mb-3 mb-md-0">
+                                {{ form.appointment_date.label(class="form-label") }}
+                                {{ form.appointment_date(
+                                    class="form-control" + (' is-invalid' if form.appointment_date.errors else ''),
+                                    aria_invalid=('true' if form.appointment_date.errors else 'false'),
+                                    data_no_past=True
+                                ) }}
+                                {% if form.appointment_date.errors %}
+                                    <div class="invalid-feedback d-block" role="alert">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {% for error in form.appointment_date.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="col-md-6">
+                                {{ form.appointment_time.label(class="form-label") }}
+                                {{ form.appointment_time(
+                                    class="form-control" + (' is-invalid' if form.appointment_time.errors else ''),
+                                    aria_invalid=('true' if form.appointment_time.errors else 'false')
+                                ) }}
+                                {% if form.appointment_time.errors %}
+                                    <div class="invalid-feedback d-block" role="alert">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {% for error in form.appointment_time.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
                         </div>
                     </div>
 
-                    <div class="mb-3">
-                        {{ form.purpose.label(class="form-label fw-medium") }}
-                        {{ form.purpose(class="form-control" + (' is-invalid' if form.purpose.errors else '')) }}
-                        <div class="form-text">Reason for visit (optional)</div>
+                    <div class="sq-form-step">
+                        <div class="sq-form-step-head">
+                            <span class="sq-step-badge" aria-hidden="true">3</span>
+                            <div>
+                                <h3>Reason for visit <span class="fw-normal text-muted">(optional)</span></h3>
+                                <p>This helps the doctor prepare. Maximum 200 characters.</p>
+                            </div>
+                        </div>
+                        {{ form.purpose(class="form-control" + (' is-invalid' if form.purpose.errors else ''),
+                            rows="3",
+                            placeholder="e.g. Follow-up on blood test results",
+                            aria_invalid=('true' if form.purpose.errors else 'false'),
+                            data_counter="200") }}
                         {% if form.purpose.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.purpose.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.purpose.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2">
-                        Book Appointment
+                    <div class="sq-form-hint mb-4">
+                        <i class="bi bi-ticket-perforated me-1"></i>
+                        <strong>What happens next:</strong> a digital token with a QR code is created immediately
+                        and appears on your <a href="{{ url_for('main.patient_dashboard') }}">dashboard</a> with
+                        your queue position.
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2" data-loading-label="Booking…">
+                        <i class="bi bi-calendar-check"></i>Confirm Booking
                     </button>
                 </form>
 
-                <div class="text-center mt-3">
-                    <small class="text-muted">
-                        Your appointment will generate a digital token automatically.
-                        Check your dashboard for queue position and QR code.
-                    </small>
-                </div>
+                <p class="sq-auth-footer mb-0">
+                    Changed your mind? <a href="{{ url_for('main.patient_dashboard') }}">Return to your dashboard</a>
+                </p>
             </div>
         </div>
     </div>

@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Queue Management - SmartQueue{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2><span class="page-header-icon"><i class="bi bi-list-ol"></i></span>{{ title }}</h2>
+        <p class="page-subtitle">Who is waiting, who is being served, and what just finished.</p>
+    </div>
+    <div class="sq-page-actions">
+        <a href="{{ url_for('main.receptionist_dashboard') }}" class="btn btn-outline-primary">
+            <i class="bi bi-arrow-left"></i>Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<div class="sq-panel mb-4">
+    <div class="sq-panel-body">
+        <form method="GET" action="{{ url_for('main.receptionist_queue') }}" class="row g-2 align-items-end">
+            <div class="col-12 col-md-8">
+                <label for="doctor_id" class="form-label">Choose a queue</label>
+                <select name="doctor_id" id="doctor_id" class="form-select">
+                    <option value="" {% if not active_doctor_id %}selected{% endif %}>General queue (walk-ins)</option>
+                    {% for d in doctors %}
+                        <option value="{{ d.id }}" {% if active_doctor_id == d.id %}selected{% endif %}>
+                            Dr. {{ d.full_name }}{% if d.specialization %} &mdash; {{ d.specialization }}{% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12 col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i>Show Queue
+                </button>
+            </div>
+        </form>
+
+        <hr class="sq-divider">
+
+        <div class="sq-chips" aria-label="Queue summary">
+            <span class="sq-chip is-waiting"><span class="sq-chip-dot"></span>Waiting <strong>{{ tokens|length }}</strong></span>
+            <span class="sq-chip is-serving"><span class="sq-chip-dot"></span>Serving <strong>{{ serving_tokens|length }}</strong></span>
+            <span class="sq-chip is-done"><span class="sq-chip-dot"></span>Completed today <strong>{{ completed_today }}</strong></span>
+            <span class="sq-chip is-skipped"><span class="sq-chip-dot"></span>Skipped today <strong>{{ skipped_today }}</strong></span>
+        </div>
+    </div>
+</div>
+
+{% if serving_tokens %}
+<div class="sq-panel mb-4">
+    <div class="sq-panel-head">
+        <h3><i class="bi bi-bell"></i>Now Serving</h3>
+        <span class="badge-status called">In consultation</span>
+    </div>
+    <div class="sq-panel-body">
+        <div class="d-flex flex-column gap-3">
+            {% for token in serving_tokens %}
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-3">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="sq-feature-value" style="font-size: 1.6rem;">{{ token.token_number }}</div>
+                        <div>
+                            <p class="mb-0 fw-semibold">{{ token.patient.full_name if token.patient else 'Walk-in' }}</p>
+                            <p class="mb-0 small text-muted">
+                                {{ token.patient.phone if token.patient and token.patient.phone else 'No phone on record' }}
+                                &middot; called {{ token.called_at.strftime('%I:%M %p') if token.called_at else 'just now' }}
+                            </p>
+                        </div>
+                    </div>
+                    <span class="badge-status called">Called</span>
+                </div>
+                {% if not loop.last %}<hr class="sq-divider my-0">{% endif %}
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<div class="sq-panel mb-4">
+    <div class="sq-panel-head">
+        <h3><i class="bi bi-hourglass-split"></i>Waiting</h3>
+        <span class="sq-muted-xs">{{ tokens|length }} patient{{ '' if tokens|length == 1 else 's' }}</span>
+    </div>
+    <div class="sq-panel-body is-flush">
+        {% if tokens %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Position</th>
+                            <th scope="col">Token</th>
+                            <th scope="col">Patient</th>
+                            <th scope="col" class="sq-hide-sm">Phone</th>
+                            <th scope="col" class="sq-hide-sm">Waiting since</th>
+                            <th scope="col">Status</th>
+                            <th scope="col" class="text-end">QR</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token in tokens %}
+                            <tr {% if loop.first %}class="sq-row-serving"{% endif %}>
+                                <td class="fw-bold">
+                                    {{ token.queue_position }}
+                                    {% if loop.first %}
+                                        <span class="visually-hidden">(next to be called)</span>
+                                    {% endif %}
+                                </td>
+                                <td class="fw-semibold">{{ token.token_number }}</td>
+                                <td>
+                                    {{ token.patient.full_name if token.patient else 'Walk-in' }}
+                                    {% if loop.first %}
+                                        <div class="small text-muted">Next to be called</div>
+                                    {% endif %}
+                                </td>
+                                <td class="sq-hide-sm">{{ token.patient.phone if token.patient and token.patient.phone else '-' }}</td>
+                                <td class="text-muted sq-hide-sm">{{ token.generated_at.strftime('%Y-%m-%d %I:%M %p') }}</td>
+                                <td>
+                                    <span class="badge-status waiting">
+                                        <span class="visually-hidden">Status: </span>Waiting
+                                    </span>
+                                </td>
+                                <td class="text-end sq-qr-col">
+                                    {% if token.qr_code_url %}
+                                        <a href="{{ token.qr_code_url }}" target="_blank" rel="noopener"
+                                           class="sq-qr sq-qr-sm" title="Open QR code for {{ token.token_number }}"
+                                           aria-label="Open QR code for token {{ token.token_number }}">
+                                            <img src="{{ token.qr_code_url }}"
+                                                 alt="QR code for token {{ token.token_number }}"
+                                                 width="44" height="44"
+                                                 data-qr-image data-token="{{ token.token_number }}" loading="lazy">
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">&ndash;</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="sq-empty">
+                <i class="bi bi-inbox"></i>
+                <p class="sq-empty-title">No patients waiting in this queue</p>
+                <p>Patients appear here as soon as they are issued a token.</p>
+                <a href="{{ url_for('main.walk_in_registration') }}" class="btn btn-soft btn-sm">
+                    <i class="bi bi-person-plus"></i>Register walk-in
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+{% if recent_activity %}
+<div class="sq-panel">
+    <div class="sq-panel-head">
+        <h3><i class="bi bi-clock-history"></i>Recently Finished</h3>
+        <span class="sq-muted-xs">Latest {{ recent_activity|length }}</span>
+    </div>
+    <div class="sq-panel-body is-flush">
+        <div class="table-responsive">
+            <table class="table mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Patient</th>
+                        <th scope="col">Status</th>
+                        <th scope="col" class="text-end">Finished</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for token in recent_activity %}
+                        <tr>
+                            <td>{{ token.patient.full_name if token.patient else 'Walk-in' }}</td>
+                            <td>
+                                <span class="badge-status {{ token.status }}">
+                                    <span class="visually-hidden">Status: </span>{{ token.status|capitalize }}
+                                </span>
+                            </td>
+                            <td class="text-end text-muted">
+                                {{ token.completed_at.strftime('%Y-%m-%d %I:%M %p') if token.completed_at else '-' }}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

@@ -1,15 +1,16 @@
 """Integration tests for registration, login, logout, and appointment booking.
 
 Uses an isolated in-memory database — never touches instance/queue.db.
-Run with: venv\Scripts\python test_auth.py
+Run with: venv\\Scripts\\python test_auth.py
 """
 
+import re
 import tempfile, os, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app import create_app, db
 from app.config import TestingConfig
-from app.models import User, Patient, Doctor, Appointment, Token
+from app.models import User, Patient, Doctor, Receptionist, Appointment, Token
 
 
 class AppTestConfig(TestingConfig):
@@ -151,22 +152,20 @@ def test_appointment_booking():
         doctor = Doctor(user=doc_user, full_name="Dr. Smith", specialization="Cardiology")
         db.session.add(doctor)
         db.session.commit()
-
-    assert Doctor.query.count() == 1, "a doctor must exist for the booking dropdown"
+        doctor_id = doctor.id
+        assert Doctor.query.count() == 1, "a doctor must exist for the booking dropdown"
 
     register(client, username="bookuser", email="book@example.com", phone="09133333333",
              full_name="Book User", date_of_birth="1990-01-01",
              password="Patient123!", confirm_password="Patient123!")
-    client.login(User.query.filter_by(username="bookuser").first())
+    assert login(client, "bookuser", "Patient123!").status_code == 302
 
     # Book a future appointment
-    import datetime
-    from datetime import date, datetime as dt
-    future = dt.combine(date.today().toordinal().__class__.__new__(__class__, 0) + datetime.timedelta(days=7) if False else dt.now().date().replace(day=date.today().day + 7), dt.min.time())
-    # simpler: build date string 7 days from now
-    nxt = dt.now().date() + datetime.timedelta(days=7)
+    from datetime import date, datetime as dt, timedelta
+    nxt = date.today() + timedelta(days=7)
+    expected = dt.combine(nxt, dt.strptime("14:30", "%H:%M").time())
     rv = client.post("/patient/book-appointment", data={
-        "doctor_id": str(doctor.id),
+        "doctor_id": str(doctor_id),
         "appointment_date": nxt.strftime("%Y-%m-%d"),
         "appointment_time": "14:30",
         "purpose": "Check-up",
@@ -175,18 +174,18 @@ def test_appointment_booking():
     assert rv.status_code == 302
 
     with app.app_context():
-        appt = Appointment.query.filter_by(patient_id=1, doctor_id=doctor.id).first()
+        appt = Appointment.query.filter_by(patient_id=1, doctor_id=doctor_id).first()
         tok = Token.query.filter_by(appointment_id=appt.id).first()
         assert appt is not None and tok is not None
         assert appt.patient_id == 1
-        assert appt.doctor_id == doctor.id
-        assert appt.appointment_datetime == future.replace(second=0, microsecond=0)
+        assert appt.doctor_id == doctor_id
+        assert appt.appointment_datetime == expected
         print("2. Appointment linked to patient + doctor; token created:", tok.token_number)
 
     # Past date should fail
-    past = dt.now().date() - datetime.timedelta(days=1)
+    past = date.today() - timedelta(days=1)
     rv = client.post("/patient/book-appointment", data={
-        "doctor_id": str(doctor.id),
+        "doctor_id": str(doctor_id),
         "appointment_date": past.strftime("%Y-%m-%d"),
         "appointment_time": "14:30",
     }, follow_redirects=False)
@@ -203,6 +202,7 @@ def test_appointment_booking():
     assert rv.status_code == 200
 
     # Not logged in should be blocked
+    logout(client)
     rv = client.get("/patient/book-appointment")
     print("5. Not logged in -> redirected")
     assert rv.status_code == 302
@@ -210,8 +210,109 @@ def test_appointment_booking():
     print("appointment booking: OK\n")
 
 
+def make_receptionist(app, username, password):
+    """Seed a receptionist user + profile directly (public registration
+    only creates patients)."""
+    with app.app_context():
+        user = User(username=username, role="receptionist")
+        user.set_password(password)
+        db.session.add(user)
+        db.session.flush()
+        db.session.add(Receptionist(user_id=user.id, full_name="Front Desk"))
+        db.session.commit()
+
+
+def test_receptionist_login():
+    print("=== receptionist login / role access ===")
+    app = make_app()
+    client = app.test_client()
+    make_receptionist(app, "frontdesk", "Reception123!")
+
+    rv = login(client, "frontdesk", "Reception123!")
+    print("1. Correct password ->", rv.status_code, rv.headers.get("Location"), "(expect 302 -> /)")
+    assert rv.status_code == 302 and rv.headers["Location"] == "/"
+
+    rv = client.get("/receptionist/dashboard")
+    print("2. GET /receptionist/dashboard as receptionist ->", rv.status_code, "(expect 200)")
+    assert rv.status_code == 200
+
+    logout(client)
+    rv = login(client, "frontdesk", "wrongpassword")
+    body = rv.get_data(as_text=True)
+    print("3. Wrong password ->", rv.status_code, "error shown:", "Invalid username or password" in body)
+    assert rv.status_code == 200
+    assert "Invalid username or password" in body
+
+    rv = client.get("/receptionist/dashboard")
+    print("4. Still logged out after wrong password ->", rv.status_code, "(expect 302 to login)")
+    assert rv.status_code == 302
+
+    rv = login(client, "ghost_user_nope", "whatever")
+    body = rv.get_data(as_text=True)
+    print("5. Unknown username -> same generic error:", "Invalid username or password" in body)
+    assert "Invalid username or password" in body
+
+    register(client, username="plainpat", email="plain@example.com", phone="09111111111",
+             full_name="Plain Pat", date_of_birth="1990-01-01",
+             password="Patient123!", confirm_password="Patient123!")
+    login(client, "plainpat", "Patient123!")
+    rv = client.get("/receptionist/dashboard")
+    print("6. Patient -> /receptionist/dashboard:", rv.status_code, "(expect 403)")
+    assert rv.status_code == 403
+
+    logout(client)
+    login(client, "frontdesk", "Reception123!")
+    rv = client.get("/patient/dashboard")
+    print("7. Receptionist -> /patient/dashboard:", rv.status_code, "(expect 403)")
+    assert rv.status_code == 403
+
+    print("receptionist login / role access: OK\n")
+
+
+def test_login_csrf_expiry():
+    print("=== login with stale/expired CSRF token (stale page) ===")
+
+    class CsrfConfig(TestingConfig):
+        WTF_CSRF_ENABLED = True  # production-like CSRF
+
+    app = create_app(CsrfConfig)
+    make_receptionist(app, "frontdesk2", "Reception123!")
+    client = app.test_client()
+
+    # Stale/invalid token: still rejected with 400 (enforcement intact)...
+    rv = client.post("/login", data={"username": "frontdesk2",
+                                     "password": "Reception123!",
+                                     "csrf_token": "stale-token"})
+    body = rv.get_data(as_text=True)
+    print("1. POST with stale token ->", rv.status_code, "(expect 400)")
+    assert rv.status_code == 400
+    # ...but the user gets a styled, actionable page instead of the bare
+    # Werkzeug error that previously made a correct-password login look
+    # broken.
+    print("2. Styled error page:", "sq-error-code" in body,
+          "| actionable link:", "Go to Login" in body)
+    assert "sq-error-code" in body
+    assert "Go to Login" in body
+    print("3. No unstyled Werkzeug page:", "Bad Request" not in body)
+    assert "Bad Request" not in body
+
+    # Fresh token + correct password still logs in
+    page = client.get("/login").get_data(as_text=True)
+    m = re.search(r'name="csrf_token"[^>]*value="([^"]+)"', page)
+    assert m, "login page must render a CSRF token"
+    rv = client.post("/login", data={"username": "frontdesk2",
+                                     "password": "Reception123!",
+                                     "csrf_token": m.group(1)})
+    print("4. POST with fresh token ->", rv.status_code, "(expect 302)")
+    assert rv.status_code == 302
+
+    print("login CSRF expiry handling: OK\n")
+
+
 if __name__ == "__main__":
     test_registration()
     test_login_logout()
+    test_receptionist_login()
+    test_login_csrf_expiry()
     test_appointment_booking()
     print("ALL TESTS PASSED")

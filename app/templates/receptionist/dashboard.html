@@ -1,85 +1,210 @@
 {% extends "base.html" %}
 
-{% block title %}Receptionist Dashboard - Smart Queue{% endblock %}
+{% block title %}Receptionist Dashboard - SmartQueue{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2 class="mb-0">Receptionist Dashboard</h2>
-        <p class="text-muted mb-0">Manage walk-ins and the live patient queue.</p>
+        <h2><span class="page-header-icon"><i class="bi bi-person-badge"></i></span>Receptionist Dashboard</h2>
+        <p class="page-subtitle">Walk-ins and the live general queue at a glance.</p>
     </div>
-    <a href="{{ url_for('main.walk_in_registration') }}" class="btn btn-primary">Register Walk-In Patient</a>
-</div>
-
-<div class="row mb-4">
-    <div class="col-md-6">
-        <div class="card shadow-sm bg-light">
-            <div class="card-body text-center">
-                <div class="display-4 fw-bold text-primary">{{ tokens|length }}</div>
-                <p class="mb-0">Patients Currently Waiting</p>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-6">
-        <a href="{{ url_for('main.receptionist_queue') }}" class="text-decoration-none">
-            <div class="card shadow-sm">
-                <div class="card-body text-center">
-                    <div class="display-6 fw-bold">View Live Queue Board</div>
-                    <p class="mb-0">Filter by doctor or general queue</p>
-                </div>
-            </div>
+    <div class="sq-page-actions">
+        <a href="{{ url_for('main.receptionist_queue') }}" class="btn btn-outline-primary">
+            <i class="bi bi-list-ol"></i>Queue Board
+        </a>
+        <a href="{{ url_for('main.walk_in_registration') }}" class="btn btn-primary">
+            <i class="bi bi-person-plus"></i>Register Walk-In
         </a>
     </div>
 </div>
 
-<div class="row">
-    <div class="col-md-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-dark">
-                <h5 class="mb-0">Recent Walk-In Registrations</h5>
+<div class="row mb-2">
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon"><i class="bi bi-people"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ tokens|length }}</div>
+                <div class="sq-stat-label">Patients Currently Waiting</div>
+                <div class="sq-stat-sub">In the general walk-in queue</div>
             </div>
-            <div class="card-body">
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon warn"><i class="bi bi-bell"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ serving_tokens|length }}</div>
+                <div class="sq-stat-label">Now Serving</div>
+                <div class="sq-stat-sub">Walk-in patients called</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon navy"><i class="bi bi-check2-all"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ completed_today }}</div>
+                <div class="sq-stat-label">Completed Today</div>
+                <div class="sq-stat-sub">Walk-in consultations finished</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        <div class="sq-panel">
+            <div class="sq-panel-head">
+                <h3><i class="bi bi-bell"></i>Now Serving</h3>
+                {% if serving_tokens %}<span class="badge-status called">In consultation</span>{% endif %}
+            </div>
+            <div class="sq-panel-body">
+                {% if serving_tokens %}
+                    <div class="d-flex flex-column gap-3">
+                        {% for token in serving_tokens %}
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                                <div class="d-flex align-items-center gap-3">
+                                    <span class="sq-token-mini">{{ token.token_number }}</span>
+                                    <div>
+                                        <p class="mb-0 fw-semibold">{{ token.patient.full_name }}</p>
+                                        <p class="mb-0 small text-muted">
+                                            Called {{ token.called_at.strftime('%I:%M %p') if token.called_at else 'just now' }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <span class="badge-status called">Called</span>
+                            </div>
+                            {% if not loop.last %}<hr class="sq-divider my-0">{% endif %}
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="sq-empty py-4">
+                        <i class="bi bi-person-check"></i>
+                        <p class="sq-empty-title">No walk-in being served</p>
+                        <p>Called walk-in patients appear here until their consultation is completed.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-7 mb-4">
+        <div class="sq-panel">
+            <div class="sq-panel-head">
+                <h3><i class="bi bi-hourglass-split"></i>Waiting Now</h3>
+                <a href="{{ url_for('main.receptionist_queue') }}" class="btn btn-soft btn-sm">
+                    Full board <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="sq-panel-body is-flush">
+                {% if tokens %}
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th scope="col">#</th>
+                                    <th scope="col">Token</th>
+                                    <th scope="col">Patient</th>
+                                    <th scope="col" class="sq-hide-sm">Waiting since</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for token in tokens %}
+                                    <tr>
+                                        <td class="fw-bold">{{ token.queue_position }}</td>
+                                        <td class="fw-semibold">{{ token.token_number }}</td>
+                                        <td>
+                                            {{ token.patient.full_name if token.patient else 'Walk-in' }}
+                                            <div class="small text-muted d-sm-none">
+                                                {{ token.generated_at.strftime('%I:%M %p') }}
+                                            </div>
+                                        </td>
+                                        <td class="text-muted sq-hide-sm">
+                                            {{ token.generated_at.strftime('%Y-%m-%d %I:%M %p') }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="sq-empty">
+                        <i class="bi bi-inbox"></i>
+                        <p class="sq-empty-title">No one is waiting</p>
+                        <p>Register a walk-in patient and their token will appear here immediately.</p>
+                        <a href="{{ url_for('main.walk_in_registration') }}" class="btn btn-soft btn-sm">
+                            <i class="bi bi-person-plus"></i>Register walk-in
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="sq-panel">
+            <div class="sq-panel-head">
+                <h3><i class="bi bi-journal-medical"></i>Recent Walk-In Registrations</h3>
+                <span class="sq-muted-xs">Latest {{ recent_tokens|length }}</span>
+            </div>
+            <div class="sq-panel-body is-flush">
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-light">
+                    <table class="table table-hover mb-0">
+                        <thead>
                             <tr>
-                                <th>Time</th>
-                                <th>Patient</th>
-                                <th>Phone</th>
-                                <th>Token</th>
-                                <th>Position</th>
-                                <th>Status</th>
-                                <th>QR Code</th>
+                                <th scope="col" class="sq-hide-sm">Time</th>
+                                <th scope="col">Patient</th>
+                                <th scope="col" class="sq-hide-sm">Phone</th>
+                                <th scope="col">Token</th>
+                                <th scope="col" class="sq-hide-sm">Position</th>
+                                <th scope="col">Status</th>
+                                <th scope="col" class="text-end">QR</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% if recent_tokens %}
                                 {% for token in recent_tokens %}
                                     <tr>
-                                        <td>{{ token.generated_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                                        <td>{{ token.patient.full_name if token.patient else 'Walk-in' }}</td>
-                                        <td>{{ token.patient.phone if token.patient else '-' }}</td>
-                                        <td class="fw-medium">{{ token.token_number }}</td>
-                                        <td>{{ token.queue_position }}</td>
+                                        <td class="text-muted sq-hide-sm">{{ token.generated_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td class="fw-semibold">{{ token.patient.full_name if token.patient else 'Walk-in' }}</td>
+                                        <td class="sq-hide-sm">{{ token.patient.phone if token.patient and token.patient.phone else '-' }}</td>
+                                        <td class="fw-semibold">{{ token.token_number }}</td>
+                                        <td class="sq-hide-sm">{{ token.queue_position }}</td>
                                         <td>
-                                            <span class="badge bg-{% if token.status == 'called' %}warning{% elif token.status == 'completed' %}success{% elif token.status == 'skipped' %}secondary{% else %}primary{% endif %}">
-                                                {{ token.status|capitalize }}
+                                            <span class="badge-status {{ 'waiting' if token.status == 'active' else token.status }}">
+                                                <span class="visually-hidden">Status: </span>{{ 'Waiting' if token.status == 'active' else token.status|capitalize }}
                                             </span>
                                         </td>
-                                        <td>
+                                        <td class="text-end sq-qr-col">
                                             {% if token.qr_code_url %}
-                                                <a href="{{ token.qr_code_url }}" target="_blank">
-                                                    <img src="{{ token.qr_code_url }}" alt="QR" width="40" height="40" class="border rounded">
+                                                <a href="{{ token.qr_code_url }}" target="_blank" rel="noopener"
+                                                   class="sq-qr sq-qr-sm" title="Open QR code for {{ token.token_number }}"
+                                                   aria-label="Open QR code for token {{ token.token_number }}">
+                                                    <img src="{{ token.qr_code_url }}"
+                                                         alt="QR code for token {{ token.token_number }}"
+                                                         width="44" height="44"
+                                                         data-qr-image data-token="{{ token.token_number }}" loading="lazy">
                                                 </a>
                                             {% else %}
-                                                <span class="text-muted">-</span>
+                                                <span class="text-muted">&ndash;</span>
                                             {% endif %}
                                         </td>
                                     </tr>
                                 {% endfor %}
                             {% else %}
                                 <tr>
-                                    <td colspan="7" class="text-center">No walk-in registrations yet</td>
+                                    <td colspan="7" class="sq-table-empty">
+                                        <div class="sq-empty mb-0">
+                                            <i class="bi bi-person-plus"></i>
+                                            <p class="sq-empty-title">No walk-ins registered yet</p>
+                                            <p>Register a walk-in patient to issue a token and add them to the queue.</p>
+                                            <a href="{{ url_for('main.walk_in_registration') }}" class="btn btn-soft btn-sm">
+                                                <i class="bi bi-person-plus"></i>Register walk-in
+                                            </a>
+                                        </div>
+                                    </td>
                                 </tr>
                             {% endif %}
                         </tbody>

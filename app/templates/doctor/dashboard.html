@@ -1,110 +1,174 @@
 {% extends "base.html" %}
 
-{% block title %}Doctor Dashboard{% endblock %}
+{% block title %}Doctor Dashboard - SmartQueue{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
+<div class="page-header">
     <div>
-        <h2 class="h3 fw-bold mb-1">Doctor Dashboard</h2>
-        <p class="text-muted mb-0">Welcome, {{ current_user.doctor.full_name }}</p>
+        <h2><span class="page-header-icon"><i class="bi bi-person-heart"></i></span>Doctor Dashboard</h2>
+        <p class="page-subtitle">
+            {{ current_user.doctor.full_name }}{% if current_user.doctor.specialization %} &mdash; {{ current_user.doctor.specialization }}{% endif %}
+        </p>
+    </div>
+    <div class="sq-page-actions">
+        <a href="{{ url_for('main.doctor_appointments') }}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar2-week"></i>My Appointments
+        </a>
     </div>
 </div>
 
-<div class="row">
-    <!-- Doctor Profile -->
-    <div class="col-lg-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header border-0">
-                <h5 class="mb-0 fw-bold">Doctor Profile</h5>
-            </div>
-            <div class="card-body pt-0">
-                <dl class="row mb-0">
-                    <dt class="col-sm-5 text-muted small text-uppercase">Specialty</dt>
-                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.specialization }}</dd>
-                    <dt class="col-sm-5 text-muted small text-uppercase">Quals</dt>
-                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.qualification }}</dd>
-                    <dt class="col-sm-5 text-muted small text-uppercase">Room</dt>
-                    <dd class="col-sm-7 fw-semibold">{{ current_user.doctor.room_number }}</dd>
-                </dl>
+<div class="row mb-2">
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon"><i class="bi bi-people"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ tokens|length }}</div>
+                <div class="sq-stat-label">Waiting</div>
+                <div class="sq-stat-sub">Your queue and general walk-ins</div>
             </div>
         </div>
     </div>
-
-    <!-- Stats -->
-    <div class="col-lg-8 mb-4">
-        <div class="row h-100">
-            <div class="col-md-6 mb-3 mb-md-0">
-                <div class="card h-100 d-flex flex-column justify-content-center align-items-center p-3">
-                    <h6 class="text-muted text-uppercase small fw-bold">Waiting</h6>
-                    <div class="display-4 fw-bold text-primary">{{ tokens|length }}</div>
-                </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon navy"><i class="bi bi-check2-all"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ completed_today }}</div>
+                <div class="sq-stat-label">Completed Today</div>
+                <div class="sq-stat-sub">Your consultations</div>
             </div>
-            <div class="col-md-6">
-                <div class="card h-100 d-flex flex-column justify-content-center align-items-center p-3">
-                    <h6 class="text-muted text-uppercase small fw-bold">Completed</h6>
-                    <div class="display-4 fw-bold" style="color: var(--accent);">{{ completed_today }}</div>
-                </div>
+        </div>
+    </div>
+    <div class="col-12 col-sm-6 col-lg-4 mb-3">
+        <div class="sq-stat">
+            <span class="sq-stat-icon navy"><i class="bi bi-door-open"></i></span>
+            <div>
+                <div class="sq-stat-value">{{ current_user.doctor.room_number }}</div>
+                <div class="sq-stat-label">Consulting Room</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Currently Serving -->
-<div class="card mb-4 border-start border-primary border-4">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold">Currently Serving</h5>
-        {% if not next_token %}
-            <a href="{{ url_for('main.call_next_token') }}" class="btn btn-primary btn-sm">Call Next</a>
-        {% endif %}
-    </div>
-    <div class="card-body">
-        {% if next_token %}
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="text-primary h1 fw-black mb-0">{{ next_token.token_number }}</div>
-                    <div class="h4 mb-0 fw-bold">{{ next_token.patient.full_name }}</div>
-                    <small class="text-muted">{{ next_token.appointment.purpose if next_token.appointment else 'Walk-in' }}</small>
+{# ── Currently serving: the single primary action area ─────────────── #}
+<div class="sq-feature {% if called_token %}is-serving{% endif %} mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
+        <div class="flex-grow-1" style="min-width: 240px;">
+            <div class="sq-feature-label">Currently Serving</div>
+            {% if called_token %}
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <div class="sq-feature-value">{{ called_token.token_number }}</div>
+                    <div>
+                        <div class="h5 fw-bold mb-0">{{ called_token.patient.full_name }}</div>
+                        <small class="text-muted">
+                            {{ called_token.appointment.purpose if called_token.appointment else 'Walk-in visit' }}
+                            {% if called_token.called_at %}
+                                &middot; called {{ called_token.called_at.strftime('%I:%M %p') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    <span class="badge-status called">
+                        <span class="visually-hidden">Status: </span>Called
+                    </span>
                 </div>
-                <form action="{{ url_for('main.complete_consultation', token_id=next_token.id) }}" method="POST">
+            {% else %}
+                <div class="h4 fw-bold mb-1 text-muted">No active consultation.</div>
+                <p class="mb-0 small text-muted">
+                    {% if next_token %}
+                        Next up is <strong>{{ next_token.token_number }}</strong> &mdash; {{ next_token.patient.full_name }}.
+                        Press <strong>Call Next</strong> when you are ready to see them.
+                    {% else %}
+                        The queue is clear. New tokens appear here automatically as patients check in.
+                    {% endif %}
+                </p>
+            {% endif %}
+        </div>
+
+        <div class="sq-action-bar">
+            {% if called_token %}
+                <form action="{{ url_for('main.activate_token', token_id=called_token.id) }}" method="POST"
+                      data-confirm="Return token {{ called_token.token_number }} ({{ called_token.patient.full_name }}) to the waiting queue?">
                     {{ form.hidden_tag() }}
-                    <button type="submit" class="btn btn-primary px-4">Complete</button>
+                    <button type="submit" class="btn btn-outline-primary">
+                        <i class="bi bi-arrow-counterclockwise"></i>Return to Queue
+                    </button>
                 </form>
-            </div>
-        {% else %}
-            <div class="text-center py-3 text-muted">No active consultation.</div>
-        {% endif %}
+                <form action="{{ url_for('main.skip_token', token_id=called_token.id) }}" method="POST"
+                      data-confirm="Skip token {{ called_token.token_number }} ({{ called_token.patient.full_name }})? They will be marked as skipped and, if booked, as a no-show.">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-warning">
+                        <i class="bi bi-skip-forward"></i>Skip
+                    </button>
+                </form>
+                <form action="{{ url_for('main.complete_consultation', token_id=called_token.id) }}" method="POST"
+                      data-confirm="Complete the consultation for token {{ called_token.token_number }} ({{ called_token.patient.full_name }})? This closes the visit and updates the appointment.">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-primary px-4">
+                        <i class="bi bi-check2-circle"></i>Complete
+                    </button>
+                </form>
+            {% elif next_token %}
+                <form action="{{ url_for('main.call_next_token') }}" method="POST">
+                    {{ form.hidden_tag() }}
+                    <button type="submit" class="btn btn-accent px-4" data-loading-label="Calling…">
+                        <i class="bi bi-bell"></i>Call Next
+                    </button>
+                </form>
+            {% else %}
+                <button type="button" class="btn btn-accent px-4" disabled aria-disabled="true"
+                        title="No patients are waiting">
+                    <i class="bi bi-bell"></i>Call Next
+                </button>
+            {% endif %}
+        </div>
     </div>
 </div>
 
-<!-- Waiting Queue -->
-<div class="card">
-    <div class="card-header d-flex justify-content-between align-items-center">
-        <h5 class="mb-0 fw-bold">Waiting Queue</h5>
+{# ── Waiting queue ────────────────────────────────────────────────── #}
+<div class="sq-panel">
+    <div class="sq-panel-head">
+        <h3><i class="bi bi-hourglass-split"></i>Waiting Queue</h3>
+        <span class="sq-muted-xs">{{ tokens|length }} patient{{ '' if tokens|length == 1 else 's' }} waiting</span>
     </div>
-    <div class="card-body p-0">
+    <div class="sq-panel-body is-flush">
         {% if tokens %}
             <div class="table-responsive">
-                <table class="table align-middle">
+                <table class="table table-hover mb-0">
                     <thead>
                         <tr>
-                            <th class="ps-4">Pos</th>
-                            <th>Token</th>
-                            <th>Patient</th>
-                            <th>Purpose</th>
-                            <th class="text-end pe-4">Actions</th>
+                            <th scope="col">Pos</th>
+                            <th scope="col">Token</th>
+                            <th scope="col">Patient</th>
+                            <th scope="col" class="sq-hide-sm">Purpose</th>
+                            <th scope="col" class="text-end">Action</th>
                         </tr>
                     </thead>
                     <tbody>
                         {% for token in tokens %}
-                            <tr>
-                                <td class="ps-4 text-muted">{{ token.queue_position }}</td>
-                                <td class="fw-bold">{{ token.token_number }}</td>
-                                <td>{{ token.patient.full_name }}</td>
-                                <td>{{ token.appointment.purpose if token.appointment else '-' }}</td>
-                                <td class="text-end pe-4">
-                                    <form action="{{ url_for('main.skip_token', token_id=token.id) }}" method="POST">
+                            <tr {% if loop.first and not called_token %}class="sq-row-serving"{% endif %}>
+                                <td class="fw-bold">{{ loop.index }}</td>
+                                <td class="fw-semibold">
+                                    {{ token.token_number }}
+                                    {% if loop.first and not called_token %}
+                                        <div class="small text-muted">Next</div>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {{ token.patient.full_name }}
+                                    <div class="small text-muted d-sm-none">
+                                        General visit
+                                    </div>
+                                </td>
+                                <td class="text-muted sq-hide-sm">
+                                    {{ token.appointment.purpose if token.appointment else 'Walk-in visit' }}
+                                </td>
+                                <td class="text-end">
+                                    <form action="{{ url_for('main.skip_token', token_id=token.id) }}" method="POST"
+                                          data-confirm="Skip token {{ token.token_number }} ({{ token.patient.full_name }})? They will be marked as skipped and, if booked, as a no-show.">
                                         {{ form.hidden_tag() }}
-                                        <button type="submit" class="btn btn-sm btn-outline-warning">Skip</button>
+                                        <button type="submit" class="btn btn-warning btn-sm"
+                                                aria-label="Skip token {{ token.token_number }} for {{ token.patient.full_name }}">
+                                            <i class="bi bi-skip-forward"></i>Skip
+                                        </button>
                                     </form>
                                 </td>
                             </tr>
@@ -113,7 +177,14 @@
                 </table>
             </div>
         {% else %}
-            <div class="text-center py-4 text-muted">Queue is empty.</div>
+            <div class="sq-empty">
+                <i class="bi bi-check2-circle"></i>
+                <p class="sq-empty-title">Queue is empty</p>
+                <p>No patients are waiting right now. New tokens appear here as patients check in.</p>
+                <a href="{{ url_for('main.doctor_appointments') }}" class="btn btn-soft btn-sm">
+                    <i class="bi bi-calendar2-week"></i>Review appointments
+                </a>
+            </div>
         {% endif %}
     </div>
 </div>

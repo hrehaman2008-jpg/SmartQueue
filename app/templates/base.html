@@ -3,55 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Smart Queue{% endblock %}</title>
+    <title>{% block title %}SmartQueue{% endblock %}</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('main.index') }}">Smart Queue</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
+    <a class="sq-skip-link" href="#main-content">Skip to main content</a>
+
+    <nav class="navbar navbar-expand-lg sq-navbar" aria-label="Main navigation">
+        <div class="container">
+            <a class="sq-brand" href="{{ url_for('main.index') }}">
+                <span class="sq-brand-mark" aria-hidden="true"><i class="bi bi-calendar2-check"></i></span>
+                SmartQueue
+            </a>
+            <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <i class="bi bi-list fs-2 text-primary"></i>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto sq-nav-role">
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.index') }}">Home</a>
+                        <a class="nav-link {% if request.endpoint == 'main.index' %}active{% endif %}"
+                           {% if request.endpoint == 'main.index' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.index') }}"><i class="bi bi-house-door"></i>Home</a>
+                    </li>
+
+                    {% if current_user.is_authenticated and current_user.is_patient %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.patient_dashboard' %}active{% endif %}"
+                           {% if request.endpoint == 'main.patient_dashboard' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.patient_dashboard') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('main.about') }}">About</a>
+                        <a class="nav-link {% if request.endpoint == 'main.book_appointment' %}active{% endif %}"
+                           {% if request.endpoint == 'main.book_appointment' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.book_appointment') }}"><i class="bi bi-calendar-plus"></i>Book</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.patient_history' %}active{% endif %}"
+                           {% if request.endpoint == 'main.patient_history' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.patient_history') }}"><i class="bi bi-clock-history"></i>History</a>
+                    </li>
+                    {% elif current_user.is_authenticated and current_user.is_doctor %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.doctor_dashboard' %}active{% endif %}"
+                           {% if request.endpoint == 'main.doctor_dashboard' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.doctor_dashboard') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.doctor_appointments' %}active{% endif %}"
+                           {% if request.endpoint == 'main.doctor_appointments' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.doctor_appointments') }}"><i class="bi bi-calendar2-week"></i>Appointments</a>
+                    </li>
+                    {% elif current_user.is_authenticated and current_user.is_receptionist %}
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.receptionist_dashboard' %}active{% endif %}"
+                           {% if request.endpoint == 'main.receptionist_dashboard' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.receptionist_dashboard') }}"><i class="bi bi-speedometer2"></i>Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.receptionist_queue' %}active{% endif %}"
+                           {% if request.endpoint == 'main.receptionist_queue' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.receptionist_queue') }}"><i class="bi bi-list-ol"></i>Queue</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.walk_in_registration' %}active{% endif %}"
+                           {% if request.endpoint == 'main.walk_in_registration' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.walk_in_registration') }}"><i class="bi bi-person-plus"></i>Walk-in</a>
+                    </li>
+                    {% endif %}
+
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.endpoint == 'main.about' %}active{% endif %}"
+                           {% if request.endpoint == 'main.about' %}aria-current="page"{% endif %}
+                           href="{{ url_for('main.about') }}"><i class="bi bi-info-circle"></i>About</a>
                     </li>
                 </ul>
                 <ul class="navbar-nav">
                     {% if current_user.is_authenticated %}
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                {{ current_user.username }}
+                            <a class="nav-link sq-user-toggle dropdown-toggle" href="#" role="button"
+                               data-bs-toggle="dropdown" aria-expanded="false">
+                                <span class="sq-avatar" aria-hidden="true">
+                                    {% if current_user.is_doctor %}<i class="bi bi-person-heart"></i>
+                                    {% elif current_user.is_receptionist %}<i class="bi bi-person-badge"></i>
+                                    {% else %}<i class="bi bi-person"></i>{% endif %}
+                                </span>
+                                <span class="text-truncate" style="max-width: 12rem;">
+                                    {% if current_user.is_doctor and current_user.doctor %}
+                                        Dr. {{ current_user.doctor.full_name }}
+                                    {% elif current_user.is_receptionist and current_user.receptionist %}
+                                        {{ current_user.receptionist.full_name }}
+                                    {% elif current_user.is_patient and current_user.patient %}
+                                        {{ current_user.patient.full_name }}
+                                    {% else %}
+                                        {{ current_user.username }}
+                                    {% endif %}
+                                </span>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end">
-                                {% if current_user.is_patient %}
-                                    <li><a class="dropdown-item" href="{{ url_for('main.patient_dashboard') }}">Patient Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('main.book_appointment') }}">Book Appointment</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('main.patient_history') }}">Appointment History</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('main.patient_profile') }}">My Profile</a></li>
-                                {% elif current_user.is_doctor %}
-                                    <li><a class="dropdown-item" href="{{ url_for('main.doctor_dashboard') }}">Doctor Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('main.doctor_appointments') }}">My Appointments</a></li>
-                                {% elif current_user.is_receptionist %}
-                                    <li><a class="dropdown-item" href="{{ url_for('main.receptionist_dashboard') }}">Receptionist Dashboard</a></li>
-                                    <li><a class="dropdown-item" href="{{ url_for('main.receptionist_queue') }}">Manage Queue</a></li>
-                                {% endif %}
+                            <ul class="dropdown-menu dropdown-menu-end sq-dropdown">
+                                <li>
+                                    <span class="dropdown-item-text small text-muted">
+                                        Signed in as <strong>{{ current_user.username }}</strong>
+                                        ({{ current_user.role }})
+                                    </span>
+                                </li>
                                 <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="{{ url_for('main.logout') }}">Log Out</a></li>
+                                {% if current_user.is_patient %}
+                                    <li><a class="dropdown-item" href="{{ url_for('main.patient_profile') }}"><i class="bi bi-person-gear me-2"></i>My Profile</a></li>
+                                {% elif current_user.is_doctor %}
+                                    <li><a class="dropdown-item" href="{{ url_for('main.doctor_appointments') }}"><i class="bi bi-calendar2-week me-2"></i>My Appointments</a></li>
+                                {% elif current_user.is_receptionist %}
+                                    <li><a class="dropdown-item" href="{{ url_for('main.receptionist_queue') }}"><i class="bi bi-list-ol me-2"></i>Manage Queue</a></li>
+                                {% endif %}
+                                <li><a class="dropdown-item" href="{{ url_for('main.logout') }}"><i class="bi bi-box-arrow-right me-2"></i>Log Out</a></li>
                             </ul>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.login') }}">Log In</a>
+                            <a class="nav-link" href="{{ url_for('main.login') }}"><i class="bi bi-box-arrow-in-right"></i>Log In</a>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.register') }}">Register</a>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-primary" href="{{ url_for('main.register') }}">Register</a>
                         </li>
                     {% endif %}
                 </ul>
@@ -59,24 +133,33 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category, message in messages %}
-                    <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
-
-        {% block content %}{% endblock %}
-    </div>
-
-    <footer class="bg-light text-center text-muted py-3 mt-5">
+    <main class="sq-main" id="main-content" tabindex="-1">
         <div class="container">
-            <p class="mb-0">Smart Queue System &copy; {{ now().year }} | College Project</p>
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="sq-flash-stack" aria-live="polite">
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else 'success' if category == 'success' else 'info' }} alert-dismissible fade show"
+                                 role="{{ 'alert' if category == 'error' else 'status' }}">
+                                {% if category == 'error' %}<i class="bi bi-exclamation-circle"></i>
+                                {% elif category == 'success' %}<i class="bi bi-check-circle"></i>
+                                {% else %}<i class="bi bi-info-circle"></i>{% endif %}
+                                <span>{{ message }}</span>
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Dismiss message"></button>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <footer class="sq-footer">
+        <div class="container d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <span><i class="bi bi-calendar2-check me-1"></i>SmartQueue &mdash; Digital Token &amp; Queue Management</span>
+            <span>&copy; {{ now().year }} SmartQueue. All rights reserved.</span>
         </div>
     </footer>
 

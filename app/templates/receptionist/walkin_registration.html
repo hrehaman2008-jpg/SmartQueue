@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Register Walk-In Patient - SmartQueue{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10 col-lg-8">
+        <div class="card sq-auth-card mid">
+            <div class="sq-auth-header">
+                <span class="page-header-icon"><i class="bi bi-person-plus"></i></span>
+                <h1>Register a walk-in patient</h1>
+                <p>Name and phone number are all that is needed to issue a general-queue token.</p>
+            </div>
+            <div class="card-body pt-4">
+                {% if form.errors %}
+                    <div class="sq-error-summary" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Please correct the highlighted fields below and try again.</span>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('main.walk_in_registration') }}" novalidate>
+                    {{ form.hidden_tag() }}
+
+                    <div class="mb-3">
+                        {{ form.full_name.label(class="form-label") }}
+                        {{ form.full_name(
+                            class="form-control" + (' is-invalid' if form.full_name.errors else ''),
+                            placeholder="Patient's full name",
+                            autocomplete="name",
+                            aria_invalid=('true' if form.full_name.errors else 'false')
+                        ) }}
+                        {% if form.full_name.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.full_name.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        {{ form.phone.label(class="form-label") }}
+                        {{ form.phone(
+                            class="form-control" + (' is-invalid' if form.phone.errors else ''),
+                            placeholder="e.g. 055 123 4567",
+                            autocomplete="tel",
+                            inputmode="tel",
+                            aria_invalid=('true' if form.phone.errors else 'false'),
+                            aria_describedby="phone-help"
+                        ) }}
+                        <div id="phone-help" class="form-text">
+                            Used to match an existing patient record &mdash; the same number never creates a duplicate.
+                        </div>
+                        {% if form.phone.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.phone.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <details class="mb-4">
+                        <summary class="sq-muted-xs fw-semibold" style="cursor: pointer;">
+                            Add optional details (email, reason for visit)
+                        </summary>
+                        <div class="pt-3">
+                            <div class="mb-3">
+                                {{ form.email.label(class="form-label") }}
+                                {{ form.email(
+                                    class="form-control" + (' is-invalid' if form.email.errors else ''),
+                                    placeholder="Email (optional)",
+                                    autocomplete="email",
+                                    aria_invalid=('true' if form.email.errors else 'false')
+                                ) }}
+                                {% if form.email.errors %}
+                                    <div class="invalid-feedback d-block" role="alert">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {% for error in form.email.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.reason.label(class="form-label") }}
+                                {{ form.reason(
+                                    class="form-control" + (' is-invalid' if form.reason.errors else ''),
+                                    rows="2",
+                                    placeholder="Reason for visit (optional)",
+                                    aria_invalid=('true' if form.reason.errors else 'false'),
+                                    data_counter="200"
+                                ) }}
+                                {% if form.reason.errors %}
+                                    <div class="invalid-feedback d-block" role="alert">
+                                        <i class="bi bi-exclamation-circle"></i>
+                                        {% for error in form.reason.errors %}{{ error }}{% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </details>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2" data-loading-label="Issuing token…">
+                        <i class="bi bi-ticket-perforated"></i>Issue Walk-In Token
+                    </button>
+                </form>
+
+                <div class="sq-form-hint mt-4 mb-0">
+                    <i class="bi bi-qr-code me-1"></i>
+                    A digital token with a QR code is issued immediately and the patient joins the general queue.
+                    Position is assigned automatically.
+                </div>
+
+                <p class="sq-auth-footer mb-0">
+                    <a href="{{ url_for('main.receptionist_dashboard') }}">Back to dashboard</a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

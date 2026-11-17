@@ -1,67 +1,79 @@
 {% extends "base.html" %}
 
-{% block title %}About - Smart Queue and Digital Token System{% endblock %}
+{% block title %}About - SmartQueue{% endblock %}
 
 {% block content %}
+<div class="page-header">
+    <div>
+        <h2><span class="page-header-icon"><i class="bi bi-info-circle"></i></span>About SmartQueue</h2>
+        <p class="page-subtitle">Digital token and queue management for modern clinics.</p>
+    </div>
+</div>
+
 <div class="row">
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white">
-                <h4 class="mb-0">About This Project</h4>
-            </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-heart-pulse"></i>About This Project</div>
             <div class="card-body">
-                <p class="card-text">
-                    <strong>Smart Queue and Digital Token System</strong> is a college project built with Python Flask,
-                    Flask-SQLAlchemy, and SQLite. It demonstrates a modern digital queue management system for hospitals
+                <p>
+                    <strong>SmartQueue</strong> is a digital queue management system for hospitals
                     and clinics, replacing paper tokens with secure, scannable digital tokens.
                 </p>
-                <p class="card-text">
-                    <strong>Tech stack:</strong> Python, Flask, Flask-SQLAlchemy, Flask-Login, Flask-WTF, WTForms,
-                    SQLite, Bootstrap 5, HTML, CSS, and JavaScript.
+                <p class="text-muted mb-4">
+                    Built with Python Flask, Flask-SQLAlchemy, Flask-Login, and Flask-WTF,
+                    with Bootstrap 5 on the front end.
                 </p>
-                <p class="card-text">
-                    <strong>Security:</strong> Passwords are hashed with Werkzeug's secure password hashing,
-                    authentication uses Flask-Login sessions, and all access is enforced server-side by role.
-                </p>
+
+                <h3 class="h6 text-uppercase text-muted fw-bold mb-3"><i class="bi bi-shield-check me-1"></i>Security</h3>
+                <ul class="list-unstyled mb-0 text-muted" style="font-size: var(--sq-fs-sm);">
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Passwords hashed with Werkzeug's secure password hashing</li>
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>Session authentication via Flask-Login with server-side role enforcement</li>
+                    <li class="mb-2"><i class="bi bi-check-circle text-success me-2"></i>CSRF protection on every state-changing form</li>
+                    <li><i class="bi bi-check-circle text-success me-2"></i>Token QR codes and status visible only to the owning patient and staff</li>
+                </ul>
             </div>
         </div>
     </div>
-    <div class="col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-info text-dark">
-                <h4 class="mb-0">Demo Credentials (Development Only)</h4>
-            </div>
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header"><i class="bi bi-key"></i>Demo Credentials</div>
             <div class="card-body">
-                <p class="text-muted small mb-3">
+                <p class="text-muted mb-3" style="font-size: var(--sq-fs-sm);">
                     These accounts are for demonstration and testing only. Never use in production.
+                    {% if not show_demo_passwords %}
+                    <br><strong>Production never seeds accounts with default passwords</strong> &mdash;
+                    demo credentials are configured privately by the operator and are not published here.
+                    {% endif %}
                 </p>
-                <table class="table table-sm table-bordered">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Role</th>
-                            <th>Username</th>
-                            <th>Password</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>👨‍⚕️ Doctor</td>
-                            <td><code>doctor_demo</code></td>
-                            <td><code>Doctor123!</code></td>
-                        </tr>
-                        <tr>
-                            <td>👩‍💼 Receptionist</td>
-                            <td><code>reception_demo</code></td>
-                            <td><code>Reception123!</code></td>
-                        </tr>
-                        <tr>
-                            <td>👤 Patient</td>
-                            <td><code>patient_demo</code></td>
-                            <td><code>Patient123!</code></td>
-                        </tr>
-                    </tbody>
-                </table>
-                <p class="text-muted small">
+                <div class="table-responsive">
+                    <table class="table table-plain mb-0">
+                        <thead>
+                            <tr>
+                                <th>Role</th>
+                                <th>Username</th>
+                                <th>Password</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><i class="bi bi-person-heart me-1 text-primary"></i>Doctor</td>
+                                <td><code>doctor_demo</code></td>
+                                <td><code>{% if show_demo_passwords %}Doctor123!{% else %}&mdash; (set by operator){% endif %}</code></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-person-badge me-1 text-primary"></i>Receptionist</td>
+                                <td><code>reception_demo</code></td>
+                                <td><code>{% if show_demo_passwords %}Reception123!{% else %}&mdash; (set by operator){% endif %}</code></td>
+                            </tr>
+                            <tr>
+                                <td><i class="bi bi-person me-1 text-primary"></i>Patient</td>
+                                <td><code>patient_demo</code></td>
+                                <td><code>{% if show_demo_passwords %}Patient123!{% else %}&mdash; (set by operator){% endif %}</code></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted mt-3 mb-0" style="font-size: var(--sq-fs-sm);">
                     You can also <a href="{{ url_for('main.register') }}">register a new patient account</a> to try
                     the full self-service flow.
                 </p>
@@ -70,29 +82,25 @@
     </div>
 </div>
 
-<div class="row mt-4">
-    <div class="col-lg-12">
-        <div class="card shadow-sm">
-            <div class="card-header bg-secondary text-white">
-                <h4 class="mb-0">Project Structure</h4>
-            </div>
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-folder2-open"></i>Project Structure</div>
             <div class="card-body">
-                <pre class="mb-0"><code>.
+<pre class="mb-0" style="font-size: var(--sq-fs-xs);">.
 ├── app/
-│   ├── __init__.py          # App factory, DB + Login init
+│   ├── __init__.py          # App factory, DB + login + CSRF init
 │   ├── config.py            # Config (dev / prod / test)
 │   ├── models.py            # User, Patient, Doctor, Receptionist, Appointment, Token
 │   ├── forms.py             # WTForms (login, register, booking, walk-in)
 │   ├── routes.py            # All view functions + auth/role checks
 │   ├── utils.py             # Token gen, QR codes, role decorators
-│   ├── static/              # CSS, JS, generated QR codes
+│   ├── static/              # CSS design system, JS
 │   └── templates/           # HTML templates
-├── instance/                # SQLite DB (gitignored)
-├── seed.py                  # Fictional demo data (manual run only)
+├── instance/                # Local database (gitignored)
 ├── run.py                   # Entry point
 ├── requirements.txt
-├── README.md
-└── .gitignore</code></pre>
+└── .gitignore</pre>
             </div>
         </div>
     </div>

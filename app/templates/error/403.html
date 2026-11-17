@@ -1,20 +1,20 @@
 {% extends "base.html" %}
 
-{% block title %}Access Forbidden - Smart Queue{% endblock %}
+{% block title %}Access Forbidden - SmartQueue{% endblock %}
 
 {% block content %}
-<div class="container py-5">
-    <div class="row justify-content-center">
-        <div class="col-md-6 text-center">
-            <div class="card shadow-sm border-0">
-                <div class="card-body p-5">
-                    <h1 class="display-4 text-danger">403</h1>
-                    <h2 class="mb-4">Access Forbidden</h2>
-                    <p class="lead">
-                        You do not have permission to access this page.
-                    </p>
-                    <a href="{{ url_for('main.index') }}" class="btn btn-outline-primary">Return Home</a>
-                </div>
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-5 text-center">
+                <span class="page-header-icon mx-auto mb-3"><i class="bi bi-shield-exclamation"></i></span>
+                <div class="sq-error-code">403</div>
+                <h2 class="mt-2 mb-3">Access Forbidden</h2>
+                <p class="text-muted mb-4">
+                    You do not have permission to access this page. If you believe this is a
+                    mistake, contact the clinic administrator.
+                </p>
+                <a href="{{ url_for('main.index') }}" class="btn btn-primary"><i class="bi bi-house-door me-1"></i>Return Home</a>
             </div>
         </div>
     </div>

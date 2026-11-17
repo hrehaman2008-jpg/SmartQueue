@@ -1,85 +1,112 @@
 {% extends "base.html" %}
 
-{% block title %}My Profile - Smart Queue{% endblock %}
+{% block title %}My Profile - SmartQueue{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-8 col-lg-6">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white py-4">
-                <h3 class="mb-0 text-center">Edit My Profile</h3>
+    <div class="col-md-10 col-lg-8">
+        <div class="card sq-auth-card wide">
+            <div class="sq-auth-header">
+                <span class="page-header-icon"><i class="bi bi-person-gear"></i></span>
+                <h1>Edit my profile</h1>
+                <p>Keep your contact details current so the clinic can reach you.</p>
             </div>
             <div class="card-body pt-4">
-                <form method="POST" action="{{ url_for('main.patient_profile') }}">
+                {% if form.errors %}
+                    <div class="sq-error-summary" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Please correct the highlighted fields below and try again.</span>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('main.patient_profile') }}" novalidate>
                     {{ form.hidden_tag() }}
 
                     <div class="mb-3">
-                        {{ form.full_name.label(class="form-label fw-medium") }}
-                        {{ form.full_name(class="form-control" + (' is-invalid' if form.full_name.errors else '')) }}
+                        {{ form.full_name.label(class="form-label") }}
+                        {{ form.full_name(
+                            class="form-control" + (' is-invalid' if form.full_name.errors else ''),
+                            autocomplete="name",
+                            aria_invalid=('true' if form.full_name.errors else 'false')
+                        ) }}
                         {% if form.full_name.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.full_name.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.full_name.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            {{ form.phone.label(class="form-label fw-medium") }}
-                            {{ form.phone(class="form-control" + (' is-invalid' if form.phone.errors else '')) }}
+                            {{ form.phone.label(class="form-label") }}
+                            {{ form.phone(
+                                class="form-control" + (' is-invalid' if form.phone.errors else ''),
+                                autocomplete="tel",
+                                inputmode="tel",
+                                aria_invalid=('true' if form.phone.errors else 'false')
+                            ) }}
                             {% if form.phone.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.phone.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
+                                <div class="invalid-feedback d-block" role="alert">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {% for error in form.phone.errors %}{{ error }}{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                         <div class="col-md-6 mb-3">
-                            {{ form.email.label(class="form-label fw-medium") }}
-                            {{ form.email(class="form-control" + (' is-invalid' if form.email.errors else '')) }}
+                            {{ form.email.label(class="form-label") }}
+                            {{ form.email(
+                                class="form-control" + (' is-invalid' if form.email.errors else ''),
+                                autocomplete="email",
+                                aria_invalid=('true' if form.email.errors else 'false')
+                            ) }}
                             {% if form.email.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.email.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
-                                </div>
-                            {% endif %}
-                        </div>
-                    </div>
-
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            {{ form.date_of_birth.label(class="form-label fw-medium") }}
-                            {{ form.date_of_birth(class="form-control" + (' is-invalid' if form.date_of_birth.errors else '')) }}
-                            {% if form.date_of_birth.errors %}
-                                <div class="invalid-feedback">
-                                    {% for error in form.date_of_birth.errors %}
-                                        <span>{{ error }}</span>
-                                    {% endfor %}
+                                <div class="invalid-feedback d-block" role="alert">
+                                    <i class="bi bi-exclamation-circle"></i>
+                                    {% for error in form.email.errors %}{{ error }}{% endfor %}
                                 </div>
                             {% endif %}
                         </div>
                     </div>
 
                     <div class="mb-3">
-                        {{ form.address.label(class="form-label fw-medium") }}
-                        {{ form.address(class="form-control" + (' is-invalid' if form.address.errors else '')) }}
-                        {% if form.address.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.address.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                        {{ form.date_of_birth.label(class="form-label") }}
+                        {{ form.date_of_birth(
+                            class="form-control" + (' is-invalid' if form.date_of_birth.errors else ''),
+                            aria_invalid=('true' if form.date_of_birth.errors else 'false')
+                        ) }}
+                        {% if form.date_of_birth.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.date_of_birth.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2">
-                        Save Changes
+                    <div class="mb-4">
+                        {{ form.address.label(class="form-label") }}
+                        {{ form.address(
+                            class="form-control" + (' is-invalid' if form.address.errors else ''),
+                            rows="2",
+                            aria_invalid=('true' if form.address.errors else 'false'),
+                            data_counter="200"
+                        ) }}
+                        {% if form.address.errors %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.address.errors %}{{ error }}{% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 py-2" data-loading-label="Saving…">
+                        <i class="bi bi-check2"></i>Save Changes
                     </button>
                 </form>
+
+                <p class="sq-auth-footer mb-0">
+                    <a href="{{ url_for('main.patient_dashboard') }}">Back to dashboard</a>
+                </p>
             </div>
         </div>
     </div>

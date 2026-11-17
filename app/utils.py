@@ -7,13 +7,13 @@ Contains helpers for:
 - Patient/doctor context helpers
 """
 
-import os
+import io
 import uuid
+from datetime import timezone
 import qrcode
 from functools import wraps
 from flask import (
     abort,
-    current_app,
     flash,
     redirect,
     url_for,
@@ -48,27 +48,19 @@ def generate_token_number():
 # ──────────────────────────────────────────────────────────────────
 
 
-def generate_qr_code(token_number, base_url=None):
-    """Generate a QR code PNG for a token and return the relative filename.
+def generate_qr_png(token_number):
+    """Render a token's QR code PNG in memory and return a ``BytesIO``.
 
-    The QR encodes only the token identifier — no patient data,
-    no medical information. In production, you would encode a URL
-    like ``https://clinic.example/token/T-0472`` that the patient's
-    phone can open to show live queue position.
+    The QR encodes only the token identifier — no patient data, no
+    medical information.
 
-    The PNG is saved under ``app/static/qrcode/`` and the filename
-    returned (e.g. ``token_T-0472.png``).
+    Nothing is written to disk: serverless hosts (e.g. Vercel) expose a
+    read-only filesystem outside ``/tmp``, and ``/tmp`` itself does not
+    persist across invocations. The image is deterministic from the
+    token number, so it can be regenerated on every request.
     """
-    # Ensure the output directory exists
-    static_qr_dir = os.path.join(
-        current_app.root_path, "static", "qrcode"
-    )
-    os.makedirs(static_qr_dir, exist_ok=True)
-
-    # Data payload — only the token identifier
     payload = f"token:{token_number}"
 
-    # Create QR code image
     qr = qrcode.QRCode(
         version=3,  # 29x29 modules — fits ~25 chars comfortably
         error_correction=qrcode.constants.ERROR_CORRECT_M,
@@ -80,12 +72,30 @@ def generate_qr_code(token_number, base_url=None):
 
     img = qr.make_image(fill_color="black", back_color="white")
 
-    # Sanitize filename
-    safe_name = f"token_{token_number.replace('-', '_')}.png"
-    filepath = os.path.join(static_qr_dir, safe_name)
-    img.save(filepath, format="PNG")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+    return buffer
 
-    return safe_name
+
+def utc_from_clinic_time(naive_dt, clinic_tz):
+    """Interpret ``naive_dt`` as clinic-local time and return naive UTC.
+
+    Bookings store naive UTC datetimes (the existing convention). A
+    configured IANA timezone (e.g. ``CLINIC_TIMEZONE=Asia/Riyadh``)
+    makes the booking form behave in the clinic's wall-clock time;
+    the default of ``UTC`` preserves historical behaviour.
+    Unknown timezone names fall back to treating the input as UTC.
+    """
+    if not clinic_tz or str(clinic_tz).upper() == "UTC":
+        return naive_dt
+    try:
+        from zoneinfo import ZoneInfo
+
+        tz = ZoneInfo(str(clinic_tz))
+    except Exception:  # noqa: BLE001 - bad config must not break booking
+        return naive_dt
+    return naive_dt.replace(tzinfo=tz).astimezone(timezone.utc).replace(tzinfo=None)
 
 
 # ──────────────────────────────────────────────────────────────────
@@ -174,9 +184,20 @@ def recalc_queue_positions(doctor_id):
 
 
 def get_next_token(doctor_id):
-    """Return the active token with queue_position == 1 for a doctor."""
+    """Return the next active token this doctor may call.
+
+    Includes the doctor's own queue **and** unassigned general walk-in
+    tokens (``doctor_id IS NULL``), ordered by arrival
+    (``generated_at``, then ``queue_position``, then ``id``) so the
+    merged sequence is deterministic across both groups.
+    """
+    from sqlalchemy import or_
+
     return (
-        Token.query.filter_by(doctor_id=doctor_id, status="active")
-        .order_by(Token.queue_position)
+        Token.query.filter(
+            Token.status == "active",
+            or_(Token.doctor_id == doctor_id, Token.doctor_id.is_(None)),
+        )
+        .order_by(Token.generated_at, Token.queue_position, Token.id)
         .first()
     )

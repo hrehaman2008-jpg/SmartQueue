@@ -1,38 +1,55 @@
 {% extends "base.html" %}
 
-{% block title %}Log In - Smart Queue{% endblock %}
+{% block title %}Log In - SmartQueue{% endblock %}
 
 {% block content %}
 <div class="row justify-content-center">
-    <div class="col-md-6 col-lg-5">
-        <div class="card shadow-sm">
-            <div class="card-header bg-primary text-white py-4">
-                <h3 class="mb-0 text-center">Log In to Your Account</h3>
+    <div class="col-md-8 col-lg-6">
+        <div class="card sq-auth-card">
+            <div class="sq-auth-header">
+                <span class="page-header-icon"><i class="bi bi-shield-lock"></i></span>
+                <h1>Welcome back</h1>
+                <p>Log in to manage your appointments and queue token.</p>
             </div>
             <div class="card-body pt-4">
-                <form method="POST" action="{{ url_for('main.login') }}">
+                {% if form.errors %}
+                    <div class="sq-error-summary" role="alert">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span>Please fill in your username and password.</span>
+                    </div>
+                {% endif %}
+
+                <form method="POST" action="{{ url_for('main.login') }}" novalidate>
                     {{ form.hidden_tag() }}
 
                     <div class="mb-3">
-                        {{ form.username.label(class="form-label fw-medium") }}
-                        {{ form.username(class="form-control" + (' is-invalid' if form.username.errors else '')) }}
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(
+                            class="form-control" + (' is-invalid' if form.username.errors else ''),
+                            placeholder="Your username",
+                            autocomplete="username",
+                            aria_invalid=('true' if form.username.errors else 'false')
+                        ) }}
                         {% if form.username.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.username.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.username.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
 
                     <div class="mb-3">
-                        {{ form.password.label(class="form-label fw-medium") }}
-                        {{ form.password(class="form-control" + (' is-invalid' if form.password.errors else '')) }}
+                        {{ form.password.label(class="form-label") }}
+                        {{ form.password(
+                            class="form-control" + (' is-invalid' if form.password.errors else ''),
+                            placeholder="Your password",
+                            autocomplete="current-password",
+                            aria_invalid=('true' if form.password.errors else 'false')
+                        ) }}
                         {% if form.password.errors %}
-                            <div class="invalid-feedback">
-                                {% for error in form.password.errors %}
-                                    <span>{{ error }}</span>
-                                {% endfor %}
+                            <div class="invalid-feedback d-block" role="alert">
+                                <i class="bi bi-exclamation-circle"></i>
+                                {% for error in form.password.errors %}{{ error }}{% endfor %}
                             </div>
                         {% endif %}
                     </div>
@@ -42,16 +59,14 @@
                         {{ form.remember_me.label(class="form-check-label") }}
                     </div>
 
-                    <button type="submit" class="btn btn-primary w-100 py-2">
-                        Log In
+                    <button type="submit" class="btn btn-primary w-100 py-2" data-loading-label="Signing in…">
+                        <i class="bi bi-box-arrow-in-right"></i>Log In
                     </button>
                 </form>
 
-                <div class="text-center mt-3">
-                    <small class="text-muted">
-                        Don't have an account? <a href="{{ url_for('main.register') }}">Register here</a>
-                    </small>
-                </div>
+                <p class="sq-auth-footer mb-0">
+                    Don't have an account? <a href="{{ url_for('main.register') }}">Register here</a>
+                </p>
             </div>
         </div>
     </div>

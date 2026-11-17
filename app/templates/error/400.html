@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Request Rejected - SmartQueue{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-body p-5 text-center">
+                <span class="page-header-icon mx-auto mb-3"><i class="bi bi-shield-exclamation"></i></span>
+                <div class="sq-error-code">400</div>
+                <h2 class="mt-2 mb-3">Request Rejected</h2>
+                <p class="text-muted mb-4">
+                    Your form has expired. This happens when a page has been open for a
+                    while &mdash; nothing was submitted. Please go back and try again.
+                </p>
+                {% if reason %}
+                    <p class="small text-muted mb-4"><code>{{ reason }}</code></p>
+                {% endif %}
+                <a href="{{ url_for('main.login') }}" class="btn btn-primary me-2"><i class="bi bi-box-arrow-in-right me-1"></i>Go to Login</a>
+                <a href="{{ url_for('main.index') }}" class="btn btn-outline-secondary"><i class="bi bi-house-door me-1"></i>Return Home</a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
